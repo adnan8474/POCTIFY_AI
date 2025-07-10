@@ -4,6 +4,7 @@ const chatInput = document.getElementById('chat-input');
 const sendButton = document.getElementById('send-button');
 
 let typingElem;
+let threadId = localStorage.getItem('threadId');
 
 function addMessage(text, role, timestamp, messageId) {
   const messageEl = document.createElement('div');
@@ -69,9 +70,13 @@ chatForm.addEventListener('submit', async (e) => {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({message: text})
+      body: JSON.stringify({message: text, threadId})
     });
     const data = await res.json();
+    if (data.threadId) {
+      threadId = data.threadId;
+      localStorage.setItem('threadId', threadId);
+    }
     removeTyping();
     if (res.ok) {
       addMessage(data.answer, 'ai', data.timestamp, data.id);

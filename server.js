@@ -22,8 +22,6 @@ if (!assistantId) {
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-let threads = {}; // simple in-memory session threads
-
 app.post('/api/chat', async (req, res) => {
   if (!openaiKey || !assistantId) {
     return res.status(500).json({ error: 'Server configuration error' });
@@ -31,28 +29,27 @@ app.post('/api/chat', async (req, res) => {
   const message = req.body.message;
   if (!message) return res.status(400).json({ error: 'No message provided' });
 
-  const sessionId = req.headers['x-session-id'] || req.ip;
-  if (!threads[sessionId]) {
-    // create thread
-    try {
-      const tRes = await fetch('https://api.openai.com/v1/threads', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${openaiKey}`,
-          'OpenAI-Beta': 'assistants=v1'
-        }
-      });
-      const tData = await tRes.json();
-      threads[sessionId] = tData.id;
-    } catch (err) {
-      console.error('thread creation error', err);
-      return res.status(500).json({ error: 'Failed to create thread' });
-    }
+let threadId = req.body.threadId;
+if (!threadId) {
+  try {
+    const tRes = await fetch('https://api.openai.com/v1/threads', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${openaiKey}`,
+        'OpenAI-Beta': 'assistants=v1'
+      }
+    });
+    const tData = await tRes.json();
+    threadId = tData.id;
+  } catch (err) {
+    console.error('thread creation error', err);
+    return res.status(500).json({ error: 'Failed to create thread' });
   }
+}
 
   try {
-    await fetch(`https://api.openai.com/v1/threads/${threads[sessionId]}/messages`, {
+    await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -62,7 +59,7 @@ app.post('/api/chat', async (req, res) => {
       body: JSON.stringify({ role: 'user', content: message })
     });
 
-    const runRes = await fetch(`https://api.openai.com/v1/threads/${threads[sessionId]}/runs`, {
+    const runRes = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -76,7 +73,7 @@ app.post('/api/chat', async (req, res) => {
     let runStatus = runData.status;
     while (runStatus === 'queued' || runStatus === 'in_progress') {
       await new Promise(r => setTimeout(r, 1000));
-      const statusRes = await fetch(`https://api.openai.com/v1/threads/${threads[sessionId]}/runs/${runData.id}`, {
+      const statusRes = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs/${runData.id}`, {
         headers: {
           Authorization: `Bearer ${openaiKey}`,
           'OpenAI-Beta': 'assistants=v1'
@@ -86,7 +83,7 @@ app.post('/api/chat', async (req, res) => {
       runStatus = statusData.status;
     }
 
-    const messagesRes = await fetch(`https://api.openai.com/v1/threads/${threads[sessionId]}/messages`, {
+    const messagesRes = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
       headers: {
         Authorization: `Bearer ${openaiKey}`,
         'OpenAI-Beta': 'assistants=v1'
@@ -95,7 +92,7 @@ app.post('/api/chat', async (req, res) => {
     const messagesData = await messagesRes.json();
     const last = messagesData.data[0];
     const answer = last.content[0].text.value;
-    res.json({ id: last.id, answer, timestamp: Date.now() });
+    res.json({ id: last.id, answer, timestamp: Date.now(), threadId });
   } catch (err) {
     console.error('chat error', err);
     res.status(500).json({ error: 'Sorry, something went wrong. Please try again later.' });

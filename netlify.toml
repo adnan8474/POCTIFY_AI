@@ -1,2 +1,15 @@
 [build]
   publish = "public"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/chat"
+  to = "/.netlify/functions/chat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/feedback"
+  to = "/.netlify/functions/feedback"
+  status = 200
+  force = true
