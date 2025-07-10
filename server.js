@@ -1,7 +1,10 @@
 const express = require('express');
 const path = require('path');
 // `node-fetch` ensures `fetch` works on Node versions <18
-const fetch = require('node-fetch');
+let fetch = global.fetch;
+if (!fetch) {
+  fetch = (...args) => import('node-fetch').then(({ default: fn }) => fn(...args));
+}
 require('dotenv').config();
 
 const app = express();

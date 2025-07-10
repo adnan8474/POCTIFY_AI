@@ -11,7 +11,7 @@ The `assets` folder is included for a future logo.
 
 ## Setup
 
-Install dependencies then start the server:
+Use Node.js 18 or newer for native `fetch` support. If you run an older Node version the server loads `node-fetch` as a polyfill automatically. Install dependencies then start the server:
 
 ```bash
 npm install
