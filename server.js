@@ -4,7 +4,7 @@ require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
-const assistantId = 'asst_89vz1AusW2LPk225XtBYU2Ar';
+const assistantId = process.env.OPENAI_ASSISTANT_ID || 'asst_89vz1AusW2LPk225XtBYU2Ar';
 const openaiKey = process.env.OPENAI_API_KEY;
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -31,6 +31,7 @@ app.post('/api/chat', async (req, res) => {
       const tData = await tRes.json();
       threads[sessionId] = tData.id;
     } catch (err) {
+      console.error('thread creation error', err);
       return res.status(500).json({ error: 'Failed to create thread' });
     }
   }
@@ -81,6 +82,7 @@ app.post('/api/chat', async (req, res) => {
     const answer = last.content[0].text.value;
     res.json({ id: last.id, answer, timestamp: Date.now() });
   } catch (err) {
+    console.error('chat error', err);
     res.status(500).json({ error: 'Sorry, something went wrong. Please try again later.' });
   }
 });

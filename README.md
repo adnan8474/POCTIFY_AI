@@ -8,3 +8,12 @@ This project provides a simple Node.js server with a frontend chat UI that conne
 ```
 
 The `assets` folder is included for a future logo.
+
+## Configuration
+
+Set the following environment variables on your hosting platform or in a `.env` file:
+
+```
+OPENAI_API_KEY=<your OpenAI API key>
+OPENAI_ASSISTANT_ID=<your assistant ID>
+```
