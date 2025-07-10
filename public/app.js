@@ -51,8 +51,8 @@ function removeTyping() {
 async function sendFeedback(id, helpful) {
   fetch('/api/feedback', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({messageId: id, helpful})
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messageId: id, helpful })
   });
 }
 
@@ -67,7 +67,7 @@ chatForm.addEventListener('submit', async (e) => {
   sendButton.disabled = true;
 
   try {
-    const res = await fetch('/api/chat', {
+    const res = await fetch('/.netlify/functions/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({message: text, threadId})
@@ -79,7 +79,7 @@ chatForm.addEventListener('submit', async (e) => {
     }
     removeTyping();
     if (res.ok) {
-      addMessage(data.answer, 'ai', data.timestamp, data.id);
+      addMessage(data.reply, 'ai', Date.now());
     } else {
       addMessage(data.error || 'Sorry, something went wrong. Please try again later.', 'ai', Date.now());
     }
